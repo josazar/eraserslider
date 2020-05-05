@@ -1,0 +1,86 @@
+@import 'colors';
+
+.ui-container {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+
+  img {
+    width: 350px;
+    height: auto;
+  }
+
+  .text-pourcent {
+    font-size: 62px;
+    color: white;
+  }
+}
+
+.btn {
+  border-radius: 15px;
+  border: 1px solid $beige;
+  padding: 10px 25px;
+  background: transparent;
+  color: $beige;
+  text-decoration: none;
+}
+
+// SLIDER TEXT
+.slider-container-ui {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+
+  .nextButton,
+  .prevButton {
+    position: absolute;
+    top: 45vh;
+    padding: 25px;
+    font-size: 46pt;
+    color: white;
+    cursor: pointer;
+    width: 40px;
+    background-image: url(../styles/images/arrow.svg);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 75%;
+    transform: translateX(0);
+    transition: 0.15s;
+
+    &:hover {
+      transition: 0.25s;
+      transition-timing-function: ease-out;
+      transform: translateX(5%);
+    }
+  }
+
+  .nextButton {
+    right: 20px;
+  }
+
+  .prevButton {
+    background-image: url(../styles/images/arrow_left.svg);
+    left: 20px;
+    transform-origin: center;
+
+    &:hover {
+      transform: translateX(-5%);
+    }
+  }
+}
+
+// ALIGN
+.align-center {
+  margin: 0 auto;
+  display: block;
+  text-align: center;
+  width: max-content;
+  left: 0;
+  right: 0
+}
+
+.vertical-center {
+  position: absolute;
+  top: 40vh;
+}
