@@ -1,9 +1,17 @@
+@font-face {
+  font-family: "Silk Serif";
+  src: local("./fonts/Silk Serif Regular"), local("./fonts/Silk-Serif-Regular"), url("/SilkSerif-Regular.34944ef3.woff2") format("woff2"), url("/SilkSerif-Regular.ed8d037e.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+}
 html,
 body {
+  font-family: "Silk Serif";
   padding: 0;
   margin: 0px;
   height: 100%;
   width: 100%;
+  overflow-x: hidden;
 }
 
 canvas {
@@ -13,6 +21,12 @@ canvas {
 
 #pixiContainer {
   line-height: 0;
+}
+@font-face {
+  font-family: "Silk Serif";
+  src: local("./fonts/Silk Serif Regular"), local("./fonts/Silk-Serif-Regular"), url("/SilkSerif-Regular.34944ef3.woff2") format("woff2"), url("/SilkSerif-Regular.ed8d037e.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
 }
 .ui-container {
   position: absolute;
@@ -27,15 +41,6 @@ canvas {
 .ui-container .text-pourcent {
   font-size: 62px;
   color: white;
-}
-
-.btn {
-  border-radius: 15px;
-  border: 1px solid #DEC2BE;
-  padding: 10px 25px;
-  background: transparent;
-  color: #DEC2BE;
-  text-decoration: none;
 }
 
 .slider-container-ui {
@@ -63,7 +68,7 @@ canvas {
 .slider-container-ui .prevButton:hover {
   transition: 0.25s;
   transition-timing-function: ease-out;
-  transform: translateX(5%);
+  transform: translateX(6%);
 }
 .slider-container-ui .nextButton {
   right: 20px;
@@ -77,6 +82,55 @@ canvas {
   transform: translateX(-5%);
 }
 
+.slider-info-bulle {
+  color: #DEC2BE;
+  font-size: 18px;
+  max-width: 300px;
+  line-height: 1.4em;
+  position: absolute;
+  right: -100%;
+  text-align: right;
+  top: 75vh;
+  transition: all 0.7s;
+  transition-timing-function: ease-out;
+}
+.slider-info-bulle.active {
+  right: 50px;
+}
+
+.btn {
+  background: transparent;
+  color: #DEC2BE;
+  text-decoration: none;
+  font-size: 18px;
+}
+
+.cta-slider {
+  margin: 0 auto;
+  display: block;
+  text-align: center;
+  width: max-content;
+  left: 0;
+  right: 0;
+  padding: 20px 0px;
+}
+.cta-slider::before {
+  content: "";
+  position: absolute;
+  height: 2px;
+  width: 0%;
+  bottom: 10px;
+  left: 0;
+  background-color: #DEC2BE;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  transition: all 0.4s;
+}
+.cta-slider:hover::before {
+  width: 100%;
+}
+
 .align-center {
   margin: 0 auto;
   display: block;
@@ -86,7 +140,7 @@ canvas {
   right: 0;
 }
 
-.vertical-center {
+.cta-slider {
   position: absolute;
   top: 40vh;
 }

@@ -1,13 +1,18 @@
 import * as PIXI from 'pixi.js'
 import { lerp, map } from './inc/utils'
 import { gsap } from 'gsap'
+import CSSRulePlugin from 'gsap/CSSRulePlugin'
 import Datas from './Datas'
 import Slider from './slider/Slider'
 import Conf from './conf'
 import Store from './Store'
-
+import MouseTrail from './fx/mouseTrail'
+import Gomme from './slider/Gomme'
 import './styles/styles.scss'
 import './styles/ui.scss'
+
+// Register gsap plugins
+gsap.registerPlugin(CSSRulePlugin)
 
 let _w = window.innerWidth
 let _h = window.innerHeight
@@ -17,12 +22,10 @@ let _h = window.innerHeight
  */
 const debug = false
 const { colors } = Conf
-const uiDiv = document.getElementById('UI')
 
 /**
  * Pixi App
  */
-console.log('App')
 
 const app = new PIXI.Application({
 	resolution: window.devicePixelRatio,
@@ -63,15 +66,27 @@ function setup(loader, resources) {
 	const slider = new Slider(Datas.slides, brushSprite)
 	const slides = slider.slides
 	const nbSlides = slides.length
+	// Mouse Fx
+	Store.mouseTrailFx = new MouseTrail()
+	// Gomme Sprite
+	const gomme = new Gomme()
+
 	/**
 	 * USER LISTENERS
 	 */
 	app.stage.interactive = true
+	app.stage.on('pointermove', pointerMove)
 	app.stage.on('pointerdown', pointerDown)
 	app.stage.on('pointerup', pointerUp)
 
+	function pointerMove(event) {
+		// Mouse Fx
+		Store.dragging === true && Store.mouseTrailFx.update()
+	}
 	function pointerDown(event) {
 		Store.dragging = true
+		Store.mouseTrailFx.init()
+		gomme.down()
 	}
 
 	function pointerUp(event) {
@@ -79,7 +94,18 @@ function setup(loader, resources) {
 		const currentSlide = slides[Store.activeSlider]
 		// On calcule les mots qu'on efface sure le slide actuel
 		progressWordGetErased(currentSlide)
+		Store.mouseTrailFx.onMouseUp()
+
+		gomme.up()
 	}
+
+	/**
+	 * MAIN LOOP
+	 */
+	app.ticker.add((delta) => {
+		// Gomme
+		gomme.update()
+	})
 }
 
 function progressWordGetErased(currentSlide) {
@@ -95,12 +121,20 @@ function progressWordGetErased(currentSlide) {
 			// le bloc de texte est effacé
 			erasedContents[i].onErasedComplete()
 			// si plusieurs bloc Textes on réarrange tous les textes
-			if (erasedContents.length > 1) currentSlide.rearangeTextBlock()
+			if (erasedContents.length > 1) {
+				currentSlide.rearangeTextBlock()
+			}
 		}
 		erasedContents[i].isErased && nbErasedComplete++
 	}
 	// dés que le/les texte-s est effacé à plus de 70% on déclenche l'action de suite
-	nbErasedComplete === erasedContents.length && eraserComplete(currentSlide)
+	if (
+		nbErasedComplete === erasedContents.length &&
+		currentSlide.isComplete === false
+	) {
+		currentSlide.isComplete = true
+		eraserComplete(currentSlide)
+	}
 }
 
 function handleOnProgress(loader, resources) {
@@ -109,40 +143,60 @@ function handleOnProgress(loader, resources) {
 
 /*-----------------------------------------------------------------------*/
 function eraserComplete(currentSlide) {
-	// 1. Affichage du bouton dans le container UI
-	// 2. Efface le reste du texte si phrase seul // si multi texte on laisse le texte visible
-
-	let btn = document.getElementById('EraserCompleteBtn')
-	if (!uiDiv.contains(btn)) {
-		btn = document.createElement('a')
-		btn.setAttribute('class', 'btn align-center vertical-center ')
-		btn.setAttribute('id', 'EraserCompleteBtn')
-		btn.setAttribute('href', '#')
-		btn.innerHTML = 'Découvrir mes services'
-		uiDiv.appendChild(btn)
-	}
-	// GSAP  animation
-	gsap.fromTo(
-		btn,
-		{
-			opacity: 0,
-			top: '80vh',
+	// 1. Efface le reste du texte si phrase seul // si multi texte on laisse le texte visible
+	// 2. Affichage du bouton dans le container UI
+	// CSSRulePlugin
+	// Bouton CTA Style
+	let rule = CSSRulePlugin.getRule('.cta-slider:before') //get the rule
+	gsap.to(rule, {
+		duration: 0.5,
+		cssRule: {
+			width: '80%',
 		},
-		{
-			opacity: 1,
-			top: '75vh',
-			duration: 1,
-		}
-	)
+	})
+
+	// BOUTON
+	let btnTop = '38vh'
+	let btnTopTarget = '43vh'
+
+	const textGroup = currentSlide.textGroup
+	const targetY = textGroup.y - 50
+	// si le slide est un seul grand block texte alors on le fadeout
 	if (!currentSlide.isMultiText) {
-		const textGroup = currentSlide.textGroup
-		const targetY = textGroup.y - 50
 		// Text pixi gsap
 		gsap.to(textGroup, {
 			alpha: 0,
 			duration: 1,
 			y: targetY,
 		})
+	} else {
+		// Si c'est c'est un texte multiple alors on le déplace vers le haut
+		// Text pixi gsap
+		gsap.to(textGroup, {
+			y: textGroup.y - 50,
+			duration: 3,
+		})
+		// Bouton Offset
+		btnTop = '85vh'
+		btnTopTarget = '80vh'
+	}
+
+	currentSlide.btn.style.display = 'block'
+	gsap.fromTo(
+		currentSlide.btn,
+		{
+			opacity: 0,
+			top: btnTop,
+		},
+		{
+			opacity: 1,
+			top: btnTopTarget,
+			duration: 1,
+		}
+	)
+	// INFOBULLE
+	if (currentSlide.infoBulle) {
+		currentSlide.infoBulle.classList.add('active')
 	}
 }
 

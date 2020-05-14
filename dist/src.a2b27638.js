@@ -49222,7 +49222,149 @@ TweenMaxWithCSS = gsapWithCSS.core.Tween;
 
 exports.TweenMax = TweenMaxWithCSS;
 exports.default = exports.gsap = gsapWithCSS;
-},{"./gsap-core.js":"node_modules/gsap/gsap-core.js","./CSSPlugin.js":"node_modules/gsap/CSSPlugin.js"}],"src/Datas.js":[function(require,module,exports) {
+},{"./gsap-core.js":"node_modules/gsap/gsap-core.js","./CSSPlugin.js":"node_modules/gsap/CSSPlugin.js"}],"node_modules/gsap/CSSRulePlugin.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = exports.CSSRulePlugin = void 0;
+
+/*!
+ * CSSRulePlugin 3.2.6
+ * https://greensock.com
+ *
+ * @license Copyright 2008-2020, GreenSock. All rights reserved.
+ * Subject to the terms at https://greensock.com/standard-license or for
+ * Club GreenSock members, the agreement issued with that membership.
+ * @author: Jack Doyle, jack@greensock.com
+*/
+
+/* eslint-disable */
+var gsap,
+    _coreInitted,
+    _win,
+    _doc,
+    CSSPlugin,
+    _windowExists = function _windowExists() {
+  return typeof window !== "undefined";
+},
+    _getGSAP = function _getGSAP() {
+  return gsap || _windowExists() && (gsap = window.gsap) && gsap.registerPlugin && gsap;
+},
+    _checkRegister = function _checkRegister() {
+  if (!_coreInitted) {
+    _initCore();
+
+    if (!CSSPlugin) {
+      console.warn("Please gsap.registerPlugin(CSSPlugin, CSSRulePlugin)");
+    }
+  }
+
+  return _coreInitted;
+},
+    _initCore = function _initCore(core) {
+  gsap = core || _getGSAP();
+
+  if (_windowExists()) {
+    _win = window;
+    _doc = document;
+  }
+
+  if (gsap) {
+    CSSPlugin = gsap.plugins.css;
+
+    if (CSSPlugin) {
+      _coreInitted = 1;
+    }
+  }
+};
+
+var CSSRulePlugin = {
+  version: "3.2.6",
+  name: "cssRule",
+  init: function init(target, value, tween, index, targets) {
+    if (!_checkRegister() || typeof target.cssText === "undefined") {
+      return false;
+    }
+
+    var div = target._gsProxy = target._gsProxy || _doc.createElement("div");
+
+    this.ss = target;
+    this.style = div.style;
+    div.style.cssText = target.cssText;
+    CSSPlugin.prototype.init.call(this, div, value, tween, index, targets); //we just offload all the work to the regular CSSPlugin and then copy the cssText back over to the rule in the render() method. This allows us to have all of the updates to CSSPlugin automatically flow through to CSSRulePlugin instead of having to maintain both
+  },
+  render: function render(ratio, data) {
+    var pt = data._pt,
+        style = data.style,
+        ss = data.ss,
+        i;
+
+    while (pt) {
+      pt.r(ratio, pt.d);
+      pt = pt._next;
+    }
+
+    i = style.length;
+
+    while (--i > -1) {
+      ss[style[i]] = style[style[i]];
+    }
+  },
+  getRule: function getRule(selector) {
+    _checkRegister();
+
+    var ruleProp = _doc.all ? "rules" : "cssRules",
+        styleSheets = _doc.styleSheets,
+        i = styleSheets.length,
+        pseudo = selector.charAt(0) === ":",
+        j,
+        curSS,
+        cs,
+        a;
+    selector = (pseudo ? "" : ",") + selector.split("::").join(":").toLowerCase() + ","; //note: old versions of IE report tag name selectors as upper case, so we just change everything to lowercase.
+
+    if (pseudo) {
+      a = [];
+    }
+
+    while (i--) {
+      //Firefox may throw insecure operation errors when css is loaded from other domains, so try/catch.
+      try {
+        curSS = styleSheets[i][ruleProp];
+
+        if (!curSS) {
+          continue;
+        }
+
+        j = curSS.length;
+      } catch (e) {
+        console.warn(e);
+        continue;
+      }
+
+      while (--j > -1) {
+        cs = curSS[j];
+
+        if (cs.selectorText && ("," + cs.selectorText.split("::").join(":").toLowerCase() + ",").indexOf(selector) !== -1) {
+          //note: IE adds an extra ":" to pseudo selectors, so .myClass:after becomes .myClass::after, so we need to strip the extra one out.
+          if (pseudo) {
+            a.push(cs.style);
+          } else {
+            return cs.style;
+          }
+        }
+      }
+    }
+
+    return a;
+  },
+  register: _initCore
+};
+exports.default = exports.CSSRulePlugin = CSSRulePlugin;
+_getGSAP() && gsap.registerPlugin(CSSRulePlugin);
+},{}],"src/Datas.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -49233,11 +49375,13 @@ var Datas = {
   slides: [{
     id: 0,
     isMultiText: false,
-    text: "J\u2019ai jamais parl\xE9 de ce que je percevais \xE0 mes proches,\n\t\tils vont me prendre pour un.e tar\xE9 ! Je ne sais pas comment\n\t\tcela s\u2019appelle. J\u2019ai aucune connaissance sur le sujet,\n\t\tje ne sais pas par o\xF9 commencer !",
+    ctaUrl: '#1',
+    text: "J\u2019ai jamais parl\xE9 de ce que je percevais \xE0 mes proches, ils vont me prendre pour un.e tar\xE9 ! Je ne sais pas comment\n\t\tcela s\u2019appelle. J\u2019ai aucune connaissance sur le sujet, je ne sais pas par o\xF9 commencer !",
     section: 'therapeute'
   }, {
     id: 1,
     isMultiText: true,
+    ctaUrl: '#2',
     text: [{
       content: "Je capte des choses hors du commun"
     }, {
@@ -49255,10 +49399,12 @@ var Datas = {
       content: "seul.e avec tout \xE7a !",
       replace: "sereine et confiante avec cela !"
     }],
-    section: 'formation'
+    section: 'formation',
+    infoBulle: "Tu es fin pr\xEAt \xE0 transformer ta relation ! C\u2019est le point de d\xE9part de constater ce qui ne va pas en toute objectivit\xE9 !"
   }, {
     id: 2,
     isMultiText: true,
+    ctaUrl: '#3',
     text: [{
       content: "J\u2019ai"
     }, {
@@ -49270,9 +49416,9 @@ var Datas = {
       content: "retrouver mon/ma conjoint.e",
       replace: "donner rdv \xE0 mon/ma ch\xE9ri.e"
     }, {
-      content: "le soir"
+      content: "le soir pour discuter ou vivre des moments de"
     }, {
-      content: "pour discuter ou vivre des moments de tendresses/ de sexualit\xE9s."
+      content: "tendresses/sexualit\xE9s."
     }, {
       content: "La communication est devenue"
     }, {
@@ -49281,8 +49427,8 @@ var Datas = {
     }, {
       content: "elle peut vite"
     }, {
-      content: "virer \xE0 un combat d'ego o\xF9 personne ne se retrouve",
-      replace: "se transformer en un jeu de d\xE9couvrir l'autre"
+      content: "virer \xE0 un combat d'ego o\xF9 personne ne se retrouve.",
+      replace: "se transformer en un jeu de d\xE9couvrir l'autre."
     }, {
       content: "Arfff...",
       replace: "Wahouu..."
@@ -49292,7 +49438,8 @@ var Datas = {
       content: "difficile !",
       replace: "si bon !"
     }],
-    section: 'therapeute'
+    section: 'therapeute',
+    infoBulle: "Tu es fin pr\xEAt \xE0 transformer ta relation ! C\u2019est le point de d\xE9part de constater ce qui ne va pas en toute objectivit\xE9 !"
   }]
 };
 var _default = Datas;
@@ -49375,7 +49522,28 @@ var TextSlide = /*#__PURE__*/function () {
     this.brushSprite = brushSprite;
     this.pixiTextsArray = [];
     this.wordsInRowsArray = [[]];
-    this.slideContainer = new PIXI.Container(); // confs
+    this.slideContainer = new PIXI.Container();
+    this.isMultiText = slideData.isMultiText;
+    this.isComplete = false; // UI DOM ELEMENTS
+
+    var uiDiv = document.getElementById('UI'); // CTA Bouton
+
+    this.btn = document.createElement('a');
+    this.btn.setAttribute('class', 'btn cta-slider ');
+    this.btn.setAttribute('id', 'EraserCompleteBtn');
+    this.btn.setAttribute('href', slideData.ctaUrl);
+    this.btn.style.display = 'none';
+    this.btn.innerHTML = "Je d\xE9couvre l'offre";
+    uiDiv.appendChild(this.btn); // InfoBulle
+
+    if (slideData.infoBulle !== undefined) {
+      this.infoBulle = document.createElement('p');
+      this.infoBulle.setAttribute('class', 'slider-info-bulle');
+      this.infoBulle.setAttribute('href', '#');
+      this.infoBulle.innerHTML = slideData.infoBulle;
+      uiDiv.appendChild(this.infoBulle);
+    } // confs
+
 
     var colors = _conf.default.colors,
         textSlider = _conf.default.textSlider;
@@ -49406,7 +49574,6 @@ var TextSlide = /*#__PURE__*/function () {
 
     this.textGroup = new PIXI.Container(); // 2 modes
 
-    this.isMultiText = slideData.isMultiText;
     var textContent = slideData.text; // S'il y a plusieurs groupes de mots à effacer
     // on créé des 'briques' de textes, soit brut (non effaclbe) soir effacable (createErasedContent)
 
@@ -49445,39 +49612,64 @@ var TextSlide = /*#__PURE__*/function () {
       this.rearangeTextBlock();
     } else {
       // Un seul groupe / La phrase complète est à effacer !
-      var pixiText = new ErasedContent({
+      this.fullText = new ErasedContent({
         textContent: textContent,
         root: this,
         slideData: slideData
       });
-      this.erasedWordsObj.push(pixiText);
-      this.textGroup.addChild(pixiText.group);
+      this.erasedWordsObj.push(this.fullText);
+      this.textGroup.addChild(this.fullText.group);
     }
 
     this.textGroup.x = _w / 2 - this.textGroup.width / 2;
     this.textGroup.y = _h / 2 - this.textGroup.height / 2;
     this.slideContainer.addChild(this.textGroup);
-    stage.addChild(this.slideContainer);
+    stage.addChild(this.slideContainer); // Resize Window Listener
+
+    window.addEventListener('resize', function () {
+      if (_this.isMultiText) {
+        _this.rearangeTextBlock();
+      } else {
+        _this.reSizeFullText(slideData);
+      }
+    });
   }
 
   _createClass(TextSlide, [{
+    key: "reSizeFullText",
+    value: function reSizeFullText(slideData) {
+      // Je pense qu'il faut réinitialiser  le erasedContent pour que la texture soit bien aligné au texte
+      var textContent = slideData.text;
+      this.fullText = new ErasedContent({
+        textContent: textContent,
+        root: this,
+        slideData: slideData
+      });
+      this.erasedWordsObj = [];
+      this.erasedWordsObj.push(this.fullText);
+      this.textGroup.removeChildren();
+      this.textGroup.addChild(this.fullText.group);
+    }
+  }, {
     key: "rearangeTextBlock",
     value: function rearangeTextBlock() {
       var _this2 = this;
 
       // j'ai mon tableau de pixiText maintenant on va les positionner pour former un paragarphe centré
-      var max_width = 400;
+      var max_width = 1000;
       var space_width = 15;
       var current_line_width = 0;
+      var next_line_width = 0;
       var _w = window.innerWidth;
       var _h = window.innerHeight;
+      if (_w < max_width + 200) max_width = _w - 400;
       var row = 0;
       var row_height = 50; // on doit calculer le maw width de textGroup avant de pouvoir poisiotnner les block texte
 
       var maxRowWidth = 0;
       this.wordsInRowsArray = [[]]; // on veut un nouvel array à deux dimensions avec chaque ligne sur un niveau
 
-      this.pixiTextsArray.forEach(function (item) {
+      this.pixiTextsArray.forEach(function (item, index) {
         if (_this2.wordsInRowsArray[row] === undefined) {
           _this2.wordsInRowsArray[row] = [];
         }
@@ -49486,9 +49678,15 @@ var TextSlide = /*#__PURE__*/function () {
 
         item.y = row * row_height;
         current_line_width += item.width + space_width;
+
+        if (index < _this2.pixiTextsArray.length - 1) {
+          next_line_width += item.width + space_width + _this2.pixiTextsArray[index + 1].width;
+        }
+
         if (current_line_width > maxRowWidth) maxRowWidth = current_line_width;
 
-        if (current_line_width > max_width) {
+        if (next_line_width > max_width) {
+          next_line_width = 0;
           current_line_width = 0;
           row += 1; // on passe à la ligne
         }
@@ -49510,29 +49708,7 @@ var TextSlide = /*#__PURE__*/function () {
             row[j].x = row[j - 1].x + row[j - 1].width + space_width;
           }
         }
-      }); // // gsap
-      // let targetX = _w / 2 - this.textGroup.width / 2
-      // let targetY = _h / 2 - this.textGroup.height / 2
-      // gsap.fromTo(
-      // 	this.textGroup,
-      // 	{
-      // 		x: this.textGroup.x,
-      // 	},
-      // 	{
-      // 		x: targetX,
-      // 		duration: 0.2,
-      // 	}
-      // )
-      // gsap.fromTo(
-      // 	this.textGroup,
-      // 	{
-      // 		y: this.textGroup.y,
-      // 	},
-      // 	{
-      // 		y: targetY,
-      // 	}
-      // )
-
+      });
       this.textGroup.x = _w / 2 - this.textGroup.width / 2;
       this.textGroup.y = _h / 2 - this.textGroup.height / 2;
     }
@@ -49578,6 +49754,7 @@ var ErasedContent = /*#__PURE__*/function () {
     this.blurFilter = new PIXI.filters.BlurFilter();
     this.blurFilter.blur = 0;
     this.pixiText.filters = [this.blurFilter];
+    var marge = 200;
     var colors = _conf.default.colors,
         textSlider = _conf.default.textSlider;
     var section = slideData.section;
@@ -49595,7 +49772,20 @@ var ErasedContent = /*#__PURE__*/function () {
       align: 'center',
       fontFamily: 'SilkSerif-Regular'
     };
-    this.pixiText.style = style; // RENDER TEXTURE - De la même taille que la Box du texte
+    this.pixiText.style = style;
+    var _w = window.innerWidth; // Si le bout de texte à effacer est le texte entier, on définit la largeur suivant la largeur de la fenêtre
+
+    if (!root.isMultiText) {
+      var widthContainer = window.innerWidth - marge * 2;
+
+      if (_w > 1100) {
+        widthContainer = 900;
+      }
+
+      this.pixiText.style.wordWrapWidth = widthContainer;
+      this.pixiText.style.wordWrap = true;
+    } // RENDER TEXTURE - De la même taille que la Box du texte
+
 
     this.rdTexture = PIXI.RenderTexture.create(this.pixiText.width, this.pixiText.height);
     this.renderTextureSprite = new PIXI.Sprite(this.rdTexture); // Masking
@@ -49668,14 +49858,7 @@ var ErasedContent = /*#__PURE__*/function () {
           blackBoard.endFill();
 
           _App.default.renderer.render(blackBoard, this.rdTexture, false, null, false); // animate
-
-
-          _gsap.gsap.fromTo(this.group, {
-            y: this.group.y - 5
-          }, {
-            y: this.group.y,
-            duration: 1.5
-          }); // init blur effect
+          // init blur effect
 
 
           _gsap.gsap.fromTo(this.blurFilter, {
@@ -49878,6 +50061,17 @@ var Slider = /*#__PURE__*/function () {
 
         default:
           break;
+      } // BOUTON CTA & INFOBULLE
+
+
+      if (currentSlide.isComplete) {
+        currentSlide.btn.style.display = 'none';
+        if (currentSlide.infoBulle) currentSlide.infoBulle.classList.remove('active');
+      }
+
+      if (targetSlide.isComplete) {
+        targetSlide.btn.style.display = 'block';
+        if (targetSlide.infoBulle) targetSlide.infoBulle.classList.add('active');
       }
 
       _Store.default.activeSlider = numSlide;
@@ -49927,7 +50121,225 @@ var Slider = /*#__PURE__*/function () {
 
 var _default = Slider;
 exports.default = _default;
-},{"./TextSlide":"src/slider/TextSlide.js","../Store":"src/Store.js","gsap":"node_modules/gsap/index.js","../App":"src/App.js","pixi.js":"node_modules/pixi.js/lib/pixi.es.js"}],"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+},{"./TextSlide":"src/slider/TextSlide.js","../Store":"src/Store.js","gsap":"node_modules/gsap/index.js","../App":"src/App.js","pixi.js":"node_modules/pixi.js/lib/pixi.es.js"}],"src/fx/mouseTrail.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var PIXI = _interopRequireWildcard(require("pixi.js"));
+
+var _App = _interopRequireDefault(require("../App"));
+
+var _gsap = _interopRequireDefault(require("gsap"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var MouseTrail = /*#__PURE__*/function () {
+  function MouseTrail() {
+    _classCallCheck(this, MouseTrail);
+
+    // Get the texture for rope.
+    var trailTexture = PIXI.Texture.from('assets/trail.png');
+    this.historyX = [];
+    this.historyY = []; // historySize determines how long the trail will be.
+
+    this.historySize = 20; // ropeSize determines how smooth the trail will be.
+
+    this.ropeSize = 50;
+    this.points = []; // Create history array.
+
+    for (var i = 0; i < this.historySize; i++) {
+      this.historyX.push(0);
+      this.historyY.push(0);
+    } // Create rope points.
+
+
+    for (var _i = 0; _i < this.ropeSize; _i++) {
+      this.points.push(new PIXI.Point(0, 0));
+    } // Create the rope
+
+
+    this.rope = new PIXI.SimpleRope(trailTexture, this.points); // Set the blendmode
+
+    this.rope.blendmode = PIXI.BLEND_MODES.ADD;
+
+    _App.default.stage.addChild(this.rope);
+  }
+
+  _createClass(MouseTrail, [{
+    key: "update",
+    value: function update() {
+      this.rope.alpha = 0.1;
+      var mouseposition = _App.default.renderer.plugins.interaction.mouse.global; // Update the mouse values to history
+
+      this.historyX.pop();
+      this.historyX.unshift(mouseposition.x);
+      this.historyY.pop();
+      this.historyY.unshift(mouseposition.y); // Update the points to correspond with history.
+
+      for (var i = 0; i < this.ropeSize; i++) {
+        var p = this.points[i]; // Smooth the curve with cubic interpolation to prevent sharp edges.
+
+        var ix = cubicInterpolation(this.historyX, i / this.ropeSize * this.historySize);
+        var iy = cubicInterpolation(this.historyY, i / this.ropeSize * this.historySize);
+        p.x = ix;
+        p.y = iy;
+      }
+    }
+  }, {
+    key: "init",
+    value: function init() {
+      var mousePos = _App.default.renderer.plugins.interaction.mouse.global; // Create history array.
+
+      this.historyX = [];
+      this.historyY = [];
+
+      for (var i = 0; i < this.historySize; i++) {
+        this.historyX.push(mousePos.x);
+        this.historyY.push(mousePos.y);
+      }
+    }
+  }, {
+    key: "onMouseUp",
+    value: function onMouseUp() {
+      var mousePos = _App.default.renderer.plugins.interaction.mouse.global;
+
+      _gsap.default.to(this.rope, {
+        alpha: 0,
+        duration: 0.5
+      });
+    }
+  }]);
+
+  return MouseTrail;
+}();
+
+var _default = MouseTrail;
+/**
+ * Cubic interpolation based on https://github.com/osuushi/Smooth.js
+ */
+
+exports.default = _default;
+
+function clipInput(k, arr) {
+  if (k < 0) k = 0;
+  if (k > arr.length - 1) k = arr.length - 1;
+  return arr[k];
+}
+
+function getTangent(k, factor, array) {
+  return factor * (clipInput(k + 1, array) - clipInput(k - 1, array)) / 2;
+}
+
+function cubicInterpolation(array, t, tangentFactor) {
+  if (tangentFactor == null) tangentFactor = 1;
+  var k = Math.floor(t);
+  var m = [getTangent(k, tangentFactor, array), getTangent(k + 1, tangentFactor, array)];
+  var p = [clipInput(k, array), clipInput(k + 1, array)];
+  t -= k;
+  var t2 = t * t;
+  var t3 = t * t2;
+  return (2 * t3 - 3 * t2 + 1) * p[0] + (t3 - 2 * t2 + t) * m[0] + (-2 * t3 + 3 * t2) * p[1] + (t3 - t2) * m[1];
+}
+},{"pixi.js":"node_modules/pixi.js/lib/pixi.es.js","../App":"src/App.js","gsap":"node_modules/gsap/index.js"}],"src/slider/Gomme.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var PIXI = _interopRequireWildcard(require("pixi.js"));
+
+var _App = _interopRequireDefault(require("../App"));
+
+var _utils = require("../inc/utils");
+
+var _gsap = _interopRequireDefault(require("gsap"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var Gomme = /*#__PURE__*/function () {
+  function Gomme() {
+    _classCallCheck(this, Gomme);
+
+    var texture = new PIXI.Texture.from('assets/Gomme.svg');
+    this.sprite = new PIXI.Sprite(texture);
+    this.sprite.anchor.set(0, 1);
+
+    _App.default.stage.addChildAt(this.sprite, _App.default.stage.children.length);
+
+    this.offSet = {
+      x: 10,
+      y: -10
+    };
+  }
+
+  _createClass(Gomme, [{
+    key: "update",
+    value: function update() {
+      if (this.sprite !== undefined) {
+        var mouseposition = _App.default.renderer.plugins.interaction.mouse.global;
+        var deltaX = this.sprite.x - mouseposition.x;
+        var newAngle = (0, _utils.map)(deltaX, 0, 100, -20, 80);
+        if (newAngle > 80) newAngle = 80;
+        this.sprite.angle = newAngle;
+        this.sprite.x = mouseposition.x + this.offSet.x;
+        this.sprite.y = mouseposition.y + this.offSet.y;
+      }
+    }
+  }, {
+    key: "down",
+    value: function down() {
+      var mouseposition = _App.default.renderer.plugins.interaction.mouse.global;
+
+      _gsap.default.to(this.offSet, {
+        x: 0,
+        y: 10,
+        duration: 0.2
+      });
+    }
+  }, {
+    key: "up",
+    value: function up() {
+      var mouseposition = _App.default.renderer.plugins.interaction.mouse.global;
+
+      _gsap.default.to(this.offSet, {
+        x: 10,
+        y: -10
+      });
+    }
+  }]);
+
+  return Gomme;
+}();
+
+var _default = Gomme;
+exports.default = _default;
+},{"pixi.js":"node_modules/pixi.js/lib/pixi.es.js","../App":"src/App.js","../inc/utils":"src/inc/utils.js","gsap":"node_modules/gsap/index.js"}],"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
 var bundleURL = null;
 
 function getBundleURLCached() {
@@ -49999,12 +50411,12 @@ var reloadCSS = require('_css_loader');
 
 module.hot.dispose(reloadCSS);
 module.hot.accept(reloadCSS);
-},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"src/styles/ui.scss":[function(require,module,exports) {
+},{"./fonts\\SilkSerif-Regular.woff2":[["SilkSerif-Regular.34944ef3.woff2","src/styles/fonts/SilkSerif-Regular.woff2"],"src/styles/fonts/SilkSerif-Regular.woff2"],"./fonts\\SilkSerif-Regular.woff":[["SilkSerif-Regular.ed8d037e.woff","src/styles/fonts/SilkSerif-Regular.woff"],"src/styles/fonts/SilkSerif-Regular.woff"],"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"src/styles/ui.scss":[function(require,module,exports) {
 var reloadCSS = require('_css_loader');
 
 module.hot.dispose(reloadCSS);
 module.hot.accept(reloadCSS);
-},{"./images\\arrow.svg":[["arrow.a948388c.svg","src/styles/images/arrow.svg"],"src/styles/images/arrow.svg"],"./images\\arrow_left.svg":[["arrow_left.755f6b4c.svg","src/styles/images/arrow_left.svg"],"src/styles/images/arrow_left.svg"],"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"src/App.js":[function(require,module,exports) {
+},{"./fonts\\SilkSerif-Regular.woff2":[["SilkSerif-Regular.34944ef3.woff2","src/styles/fonts/SilkSerif-Regular.woff2"],"src/styles/fonts/SilkSerif-Regular.woff2"],"./fonts\\SilkSerif-Regular.woff":[["SilkSerif-Regular.ed8d037e.woff","src/styles/fonts/SilkSerif-Regular.woff"],"src/styles/fonts/SilkSerif-Regular.woff"],"./images\\arrow.svg":[["arrow.a948388c.svg","src/styles/images/arrow.svg"],"src/styles/images/arrow.svg"],"./images\\arrow_left.svg":[["arrow_left.755f6b4c.svg","src/styles/images/arrow_left.svg"],"src/styles/images/arrow_left.svg"],"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"src/App.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -50018,6 +50430,8 @@ var _utils = require("./inc/utils");
 
 var _gsap = require("gsap");
 
+var _CSSRulePlugin = _interopRequireDefault(require("gsap/CSSRulePlugin"));
+
 var _Datas = _interopRequireDefault(require("./Datas"));
 
 var _Slider = _interopRequireDefault(require("./slider/Slider"));
@@ -50025,6 +50439,10 @@ var _Slider = _interopRequireDefault(require("./slider/Slider"));
 var _conf = _interopRequireDefault(require("./conf"));
 
 var _Store = _interopRequireDefault(require("./Store"));
+
+var _mouseTrail = _interopRequireDefault(require("./fx/mouseTrail"));
+
+var _Gomme = _interopRequireDefault(require("./slider/Gomme"));
 
 require("./styles/styles.scss");
 
@@ -50036,6 +50454,9 @@ function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return 
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
+// Register gsap plugins
+_gsap.gsap.registerPlugin(_CSSRulePlugin.default);
+
 var _w = window.innerWidth;
 var _h = window.innerHeight;
 /**
@@ -50044,12 +50465,10 @@ var _h = window.innerHeight;
 
 var debug = false;
 var colors = _conf.default.colors;
-var uiDiv = document.getElementById('UI');
 /**
  * Pixi App
  */
 
-console.log('App');
 var app = new PIXI.Application({
   resolution: window.devicePixelRatio,
   width: _w,
@@ -50088,17 +50507,31 @@ function setup(loader, resources) {
 
   var slider = new _Slider.default(_Datas.default.slides, brushSprite);
   var slides = slider.slides;
-  var nbSlides = slides.length;
+  var nbSlides = slides.length; // Mouse Fx
+
+  _Store.default.mouseTrailFx = new _mouseTrail.default(); // Gomme Sprite
+
+  var gomme = new _Gomme.default();
   /**
    * USER LISTENERS
    */
 
   app.stage.interactive = true;
+  app.stage.on('pointermove', pointerMove);
   app.stage.on('pointerdown', pointerDown);
   app.stage.on('pointerup', pointerUp);
 
+  function pointerMove(event) {
+    // Mouse Fx
+    _Store.default.dragging === true && _Store.default.mouseTrailFx.update();
+  }
+
   function pointerDown(event) {
     _Store.default.dragging = true;
+
+    _Store.default.mouseTrailFx.init();
+
+    gomme.down();
   }
 
   function pointerUp(event) {
@@ -50106,7 +50539,20 @@ function setup(loader, resources) {
     var currentSlide = slides[_Store.default.activeSlider]; // On calcule les mots qu'on efface sure le slide actuel
 
     progressWordGetErased(currentSlide);
+
+    _Store.default.mouseTrailFx.onMouseUp();
+
+    gomme.up();
   }
+  /**
+   * MAIN LOOP
+   */
+
+
+  app.ticker.add(function (delta) {
+    // Gomme
+    gomme.update();
+  });
 }
 
 function progressWordGetErased(currentSlide) {
@@ -50124,14 +50570,19 @@ function progressWordGetErased(currentSlide) {
       // le bloc de texte est effacé
       erasedContents[i].onErasedComplete(); // si plusieurs bloc Textes on réarrange tous les textes
 
-      if (erasedContents.length > 1) currentSlide.rearangeTextBlock();
+      if (erasedContents.length > 1) {
+        currentSlide.rearangeTextBlock();
+      }
     }
 
     erasedContents[i].isErased && nbErasedComplete++;
   } // dés que le/les texte-s est effacé à plus de 70% on déclenche l'action de suite
 
 
-  nbErasedComplete === erasedContents.length && eraserComplete(currentSlide);
+  if (nbErasedComplete === erasedContents.length && currentSlide.isComplete === false) {
+    currentSlide.isComplete = true;
+    eraserComplete(currentSlide);
+  }
 }
 
 function handleOnProgress(loader, resources) {
@@ -50141,38 +50592,60 @@ function handleOnProgress(loader, resources) {
 
 
 function eraserComplete(currentSlide) {
-  // 1. Affichage du bouton dans le container UI
-  // 2. Efface le reste du texte si phrase seul // si multi texte on laisse le texte visible
-  var btn = document.getElementById('EraserCompleteBtn');
-
-  if (!uiDiv.contains(btn)) {
-    btn = document.createElement('a');
-    btn.setAttribute('class', 'btn align-center vertical-center ');
-    btn.setAttribute('id', 'EraserCompleteBtn');
-    btn.setAttribute('href', '#');
-    btn.innerHTML = 'Découvrir mes services';
-    uiDiv.appendChild(btn);
-  } // GSAP  animation
+  // 1. Efface le reste du texte si phrase seul // si multi texte on laisse le texte visible
+  // 2. Affichage du bouton dans le container UI
+  // CSSRulePlugin
+  // Bouton CTA Style
+  var rule = _CSSRulePlugin.default.getRule('.cta-slider:before'); //get the rule
 
 
-  _gsap.gsap.fromTo(btn, {
-    opacity: 0,
-    top: '80vh'
-  }, {
-    opacity: 1,
-    top: '75vh',
-    duration: 1
-  });
+  _gsap.gsap.to(rule, {
+    duration: 0.5,
+    cssRule: {
+      width: '80%'
+    }
+  }); // BOUTON
+
+
+  var btnTop = '38vh';
+  var btnTopTarget = '43vh';
+  var textGroup = currentSlide.textGroup;
+  var targetY = textGroup.y - 50; // si le slide est un seul grand block texte alors on le fadeout
 
   if (!currentSlide.isMultiText) {
-    var textGroup = currentSlide.textGroup;
-    var targetY = textGroup.y - 50; // Text pixi gsap
-
+    // Text pixi gsap
     _gsap.gsap.to(textGroup, {
       alpha: 0,
       duration: 1,
       y: targetY
     });
+  } else {
+    // Si c'est c'est un texte multiple alors on le déplace vers le haut
+    // Text pixi gsap
+    _gsap.gsap.to(textGroup, {
+      y: textGroup.y - 50,
+      duration: 3
+    }); // Bouton Offset
+
+
+    btnTop = '85vh';
+    btnTopTarget = '80vh';
+  }
+
+  currentSlide.btn.style.display = 'block';
+
+  _gsap.gsap.fromTo(currentSlide.btn, {
+    opacity: 0,
+    top: btnTop
+  }, {
+    opacity: 1,
+    top: btnTopTarget,
+    duration: 1
+  }); // INFOBULLE
+
+
+  if (currentSlide.infoBulle) {
+    currentSlide.infoBulle.classList.add('active');
   }
 }
 /**
@@ -50228,7 +50701,7 @@ window.addEventListener('resize', function () {
   _h = window.innerHeight;
   renderer.resize(_w, _h);
 });
-},{"pixi.js":"node_modules/pixi.js/lib/pixi.es.js","./inc/utils":"src/inc/utils.js","gsap":"node_modules/gsap/index.js","./Datas":"src/Datas.js","./slider/Slider":"src/slider/Slider.js","./conf":"src/conf.js","./Store":"src/Store.js","./styles/styles.scss":"src/styles/styles.scss","./styles/ui.scss":"src/styles/ui.scss"}],"src/index.js":[function(require,module,exports) {
+},{"pixi.js":"node_modules/pixi.js/lib/pixi.es.js","./inc/utils":"src/inc/utils.js","gsap":"node_modules/gsap/index.js","gsap/CSSRulePlugin":"node_modules/gsap/CSSRulePlugin.js","./Datas":"src/Datas.js","./slider/Slider":"src/slider/Slider.js","./conf":"src/conf.js","./Store":"src/Store.js","./fx/mouseTrail":"src/fx/mouseTrail.js","./slider/Gomme":"src/slider/Gomme.js","./styles/styles.scss":"src/styles/styles.scss","./styles/ui.scss":"src/styles/ui.scss"}],"src/index.js":[function(require,module,exports) {
 "use strict";
 
 var _App = _interopRequireDefault(require("./App"));
@@ -50266,7 +50739,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "8416" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53011" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

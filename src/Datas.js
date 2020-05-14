@@ -3,15 +3,15 @@ const Datas = {
 		{
 			id: 0,
 			isMultiText: false,
-			text: `J’ai jamais parlé de ce que je percevais à mes proches,
-		ils vont me prendre pour un.e taré ! Je ne sais pas comment
-		cela s’appelle. J’ai aucune connaissance sur le sujet,
-		je ne sais pas par où commencer !`,
+			ctaUrl: '#1',
+			text: `J’ai jamais parlé de ce que je percevais à mes proches, ils vont me prendre pour un.e taré ! Je ne sais pas comment
+		cela s’appelle. J’ai aucune connaissance sur le sujet, je ne sais pas par où commencer !`,
 			section: 'therapeute',
 		},
 		{
 			id: 1,
 			isMultiText: true,
+			ctaUrl: '#2',
 			text: [
 				{
 					content: `Je capte des choses hors du commun`,
@@ -37,10 +37,12 @@ const Datas = {
 				},
 			],
 			section: 'formation',
+			infoBulle: `Tu es fin prêt à transformer ta relation ! C’est le point de départ de constater ce qui ne va pas en toute objectivité !`,
 		},
 		{
 			id: 2,
 			isMultiText: true,
+			ctaUrl: '#3',
 			text: [
 				{
 					content: `J’ai`,
@@ -57,10 +59,10 @@ const Datas = {
 					replace: `donner rdv à mon/ma chéri.e`,
 				},
 				{
-					content: `le soir`,
+					content: `le soir pour discuter ou vivre des moments de`,
 				},
 				{
-					content: `pour discuter ou vivre des moments de tendresses/ de sexualités.`,
+					content: `tendresses/sexualités.`,
 				},
 				{ content: `La communication est devenue` },
 				{
@@ -71,8 +73,8 @@ const Datas = {
 					content: `elle peut vite`,
 				},
 				{
-					content: `virer à un combat d'ego où personne ne se retrouve`,
-					replace: `se transformer en un jeu de découvrir l'autre`,
+					content: `virer à un combat d'ego où personne ne se retrouve.`,
+					replace: `se transformer en un jeu de découvrir l'autre.`,
 				},
 				{
 					content: `Arfff...`,
@@ -87,6 +89,7 @@ const Datas = {
 				},
 			],
 			section: 'therapeute',
+			infoBulle: `Tu es fin prêt à transformer ta relation ! C’est le point de départ de constater ce qui ne va pas en toute objectivité !`,
 		},
 	],
 }

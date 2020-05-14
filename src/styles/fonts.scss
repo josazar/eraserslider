@@ -1,1 +1,9 @@
 // Fonts
+@font-face {
+  font-family: 'Silk Serif';
+  src: local('./fonts/Silk Serif Regular'), local('./fonts/Silk-Serif-Regular'),
+    url('./fonts/SilkSerif-Regular.woff2') format('woff2'),
+    url('./fonts/SilkSerif-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+}

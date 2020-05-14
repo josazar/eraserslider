@@ -15,6 +15,27 @@ class TextSlide {
 		this.pixiTextsArray = []
 		this.wordsInRowsArray = [[]]
 		this.slideContainer = new PIXI.Container()
+		this.isMultiText = slideData.isMultiText
+		this.isComplete = false
+
+		// UI DOM ELEMENTS
+		const uiDiv = document.getElementById('UI')
+		// CTA Bouton
+		this.btn = document.createElement('a')
+		this.btn.setAttribute('class', 'btn cta-slider ')
+		this.btn.setAttribute('id', 'EraserCompleteBtn')
+		this.btn.setAttribute('href', slideData.ctaUrl)
+		this.btn.style.display = 'none'
+		this.btn.innerHTML = `Je découvre l'offre`
+		uiDiv.appendChild(this.btn)
+		// InfoBulle
+		if (slideData.infoBulle !== undefined) {
+			this.infoBulle = document.createElement('p')
+			this.infoBulle.setAttribute('class', 'slider-info-bulle')
+			this.infoBulle.setAttribute('href', '#')
+			this.infoBulle.innerHTML = slideData.infoBulle
+			uiDiv.appendChild(this.infoBulle)
+		}
 		// confs
 
 		const { colors, textSlider } = Conf
@@ -47,7 +68,6 @@ class TextSlide {
 		// Création d'un container qui va accuillir le ou les calques Text et le ou les masks
 		this.textGroup = new PIXI.Container()
 		// 2 modes
-		this.isMultiText = slideData.isMultiText
 		let textContent = slideData.text
 
 		// S'il y a plusieurs groupes de mots à effacer
@@ -72,6 +92,7 @@ class TextSlide {
 					})
 					erasedTextNumber++
 					this.erasedWordsObj.push(erasedContent)
+
 					// on place toutes les 'briques' de textes dans le tableau pixiTextsArray
 					this.textGroup.addChild(erasedContent.group)
 					// tableau des blocs mots qui va nous servir à les positionner
@@ -82,13 +103,13 @@ class TextSlide {
 			this.rearangeTextBlock()
 		} else {
 			// Un seul groupe / La phrase complète est à effacer !
-			let pixiText = new ErasedContent({
+			this.fullText = new ErasedContent({
 				textContent,
 				root: this,
 				slideData,
 			})
-			this.erasedWordsObj.push(pixiText)
-			this.textGroup.addChild(pixiText.group)
+			this.erasedWordsObj.push(this.fullText)
+			this.textGroup.addChild(this.fullText.group)
 		}
 
 		this.textGroup.x = _w / 2 - this.textGroup.width / 2
@@ -96,15 +117,41 @@ class TextSlide {
 
 		this.slideContainer.addChild(this.textGroup)
 		stage.addChild(this.slideContainer)
+
+		// Resize Window Listener
+		window.addEventListener('resize', () => {
+			if (this.isMultiText) {
+				this.rearangeTextBlock()
+			} else {
+				this.reSizeFullText(slideData)
+			}
+		})
+	}
+
+	reSizeFullText(slideData) {
+		// Je pense qu'il faut réinitialiser  le erasedContent pour que la texture soit bien aligné au texte
+		const textContent = slideData.text
+		this.fullText = new ErasedContent({
+			textContent,
+			root: this,
+			slideData,
+		})
+		this.erasedWordsObj = []
+		this.erasedWordsObj.push(this.fullText)
+		this.textGroup.removeChildren()
+		this.textGroup.addChild(this.fullText.group)
 	}
 
 	rearangeTextBlock() {
 		// j'ai mon tableau de pixiText maintenant on va les positionner pour former un paragarphe centré
-		const max_width = 400
+		let max_width = 1000
 		const space_width = 15
 		let current_line_width = 0
+		let next_line_width = 0
 		const _w = window.innerWidth
 		const _h = window.innerHeight
+
+		if (_w < max_width + 200) max_width = _w - 400
 		let row = 0
 		let row_height = 50
 		// on doit calculer le maw width de textGroup avant de pouvoir poisiotnner les block texte
@@ -112,15 +159,20 @@ class TextSlide {
 
 		this.wordsInRowsArray = [[]]
 		// on veut un nouvel array à deux dimensions avec chaque ligne sur un niveau
-		this.pixiTextsArray.forEach((item) => {
+		this.pixiTextsArray.forEach((item, index) => {
 			if (this.wordsInRowsArray[row] === undefined) {
 				this.wordsInRowsArray[row] = []
 			}
 			this.wordsInRowsArray[row].push(item)
 			item.y = row * row_height
 			current_line_width += item.width + space_width
+			if (index < this.pixiTextsArray.length - 1) {
+				next_line_width +=
+					item.width + space_width + this.pixiTextsArray[index + 1].width
+			}
 			if (current_line_width > maxRowWidth) maxRowWidth = current_line_width
-			if (current_line_width > max_width) {
+			if (next_line_width > max_width) {
+				next_line_width = 0
 				current_line_width = 0
 				row += 1 // on passe à la ligne
 			}
@@ -142,31 +194,6 @@ class TextSlide {
 				}
 			}
 		})
-
-		// // gsap
-		// let targetX = _w / 2 - this.textGroup.width / 2
-		// let targetY = _h / 2 - this.textGroup.height / 2
-
-		// gsap.fromTo(
-		// 	this.textGroup,
-		// 	{
-		// 		x: this.textGroup.x,
-		// 	},
-		// 	{
-		// 		x: targetX,
-		// 		duration: 0.2,
-		// 	}
-		// )
-		// gsap.fromTo(
-		// 	this.textGroup,
-		// 	{
-		// 		y: this.textGroup.y,
-		// 	},
-		// 	{
-		// 		y: targetY,
-		// 	}
-		// )
-
 		this.textGroup.x = _w / 2 - this.textGroup.width / 2
 		this.textGroup.y = _h / 2 - this.textGroup.height / 2
 	}
@@ -196,6 +223,7 @@ class ErasedContent {
 		this.blurFilter.blur = 0
 		this.pixiText.filters = [this.blurFilter]
 
+		const marge = 200
 		const { colors, textSlider } = Conf
 		const { section } = slideData
 		const secondColor =
@@ -214,6 +242,17 @@ class ErasedContent {
 			fontFamily: 'SilkSerif-Regular',
 		}
 		this.pixiText.style = style
+		const _w = window.innerWidth
+		// Si le bout de texte à effacer est le texte entier, on définit la largeur suivant la largeur de la fenêtre
+		if (!root.isMultiText) {
+			let widthContainer = window.innerWidth - marge * 2
+			if (_w > 1100) {
+				widthContainer = 900
+			}
+			this.pixiText.style.wordWrapWidth = widthContainer
+			this.pixiText.style.wordWrap = true
+		}
+
 		// RENDER TEXTURE - De la même taille que la Box du texte
 		this.rdTexture = PIXI.RenderTexture.create(
 			this.pixiText.width,
@@ -294,11 +333,6 @@ class ErasedContent {
 				blackBoard.endFill()
 				app.renderer.render(blackBoard, this.rdTexture, false, null, false)
 				// animate
-				gsap.fromTo(
-					this.group,
-					{ y: this.group.y - 5 },
-					{ y: this.group.y, duration: 1.5 }
-				)
 				// init blur effect
 				gsap.fromTo(
 					this.blurFilter,

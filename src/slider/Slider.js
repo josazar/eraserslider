@@ -116,6 +116,16 @@ class Slider {
 			default:
 				break
 		}
+		// BOUTON CTA & INFOBULLE
+		if (currentSlide.isComplete) {
+			currentSlide.btn.style.display = 'none'
+			if (currentSlide.infoBulle)
+				currentSlide.infoBulle.classList.remove('active')
+		}
+		if (targetSlide.isComplete) {
+			targetSlide.btn.style.display = 'block'
+			if (targetSlide.infoBulle) targetSlide.infoBulle.classList.add('active')
+		}
 
 		Store.activeSlider = numSlide
 	}
